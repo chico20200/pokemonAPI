@@ -1,0 +1,102 @@
+<ion-header>
+  <ion-toolbar color="danger">
+    <ion-title>Pokédex</ion-title>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="tab">
+      <ion-segment-button value="buscar"><ion-label>Buscar</ion-label></ion-segment-button>
+      <ion-segment-button value="comparar"><ion-label>Comparar</ion-label></ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- ========== NIVELES 1 y 2 ========== -->
+  <div *ngIf="tab === 'buscar'">
+    <ion-searchbar
+      [(ngModel)]="query"
+      placeholder="Nombre o número (ej. pikachu, 25)"
+      (keyup.enter)="buscar()"
+      (ionClear)="pokemon = null"
+    ></ion-searchbar>
+    <ion-button expand="block" color="danger" (click)="buscar()">Buscar</ion-button>
+
+    <div class="center" *ngIf="loading"><ion-spinner></ion-spinner></div>
+    <ion-text color="danger" *ngIf="error"><p class="center">{{ error }}</p></ion-text>
+
+    <ion-card *ngIf="pokemon" class="poke-card">
+      <div class="hero">
+        <img [src]="showGif && pokemon.animated ? pokemon.animated : selectedImg" [alt]="pokemon.name" />
+      </div>
+      <ion-card-header>
+        <ion-card-subtitle>#{{ pokemon.id }}</ion-card-subtitle>
+        <ion-card-title class="cap">{{ pokemon.name }}</ion-card-title>
+        <div class="chips">
+          <ion-chip *ngFor="let t of pokemon.types" class="cap">{{ t }}</ion-chip>
+        </div>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Nivel 2: sonido y gif -->
+        <div class="actions">
+          <ion-button size="small" (click)="playCry()" [disabled]="!pokemon.cry">
+            <ion-icon slot="start" name="volume-high"></ion-icon>Sonido
+          </ion-button>
+          <ion-button size="small" fill="outline" (click)="showGif = !showGif" [disabled]="!pokemon.animated">
+            {{ showGif ? 'Ver imagen' : 'Ver GIF' }}
+          </ion-button>
+        </div>
+
+        <!-- Nivel 2: galería (≥5 imágenes) -->
+        <div class="gallery">
+          <img
+            *ngFor="let g of pokemon.gallery"
+            [src]="g.url"
+            [class.active]="g.url === selectedImg"
+            (click)="selectedImg = g.url; showGif = false"
+          />
+        </div>
+
+        <!-- Nivel 1: detalles -->
+        <p><b>Altura:</b> {{ pokemon.height }} m &nbsp; <b>Peso:</b> {{ pokemon.weight }} kg</p>
+        <p class="cap"><b>Habilidades:</b> {{ pokemon.abilities.join(', ') }}</p>
+
+        <div *ngFor="let s of pokemon.stats" class="stat">
+          <span class="cap">{{ s.name }}</span>
+          <ion-progress-bar [value]="s.value / 200"></ion-progress-bar>
+          <b>{{ s.value }}</b>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- ========== NIVEL 3 ========== -->
+  <div *ngIf="tab === 'comparar'">
+    <ion-input label="Pokémon 1" labelPlacement="floating" fill="outline" [(ngModel)]="qA" class="ion-margin-bottom"></ion-input>
+    <ion-input label="Pokémon 2" labelPlacement="floating" fill="outline" [(ngModel)]="qB" class="ion-margin-bottom"></ion-input>
+    <ion-button expand="block" color="danger" (click)="comparar()">Comparar</ion-button>
+    <ion-text color="danger" *ngIf="errCmp"><p class="center">{{ errCmp }}</p></ion-text>
+
+    <ion-grid *ngIf="a && b">
+      <ion-row class="center">
+        <ion-col><img [src]="a.gallery[0]?.url" width="110" /><h3 class="cap">{{ a.name }}</h3></ion-col>
+        <ion-col><img [src]="b.gallery[0]?.url" width="110" /><h3 class="cap">{{ b.name }}</h3></ion-col>
+      </ion-row>
+      <ion-row *ngFor="let s of a.stats" class="cmp-row">
+        <ion-col size="4" class="center" [class.winner]="win(s.name, a, b)">{{ s.value }}</ion-col>
+        <ion-col size="4" class="center cap">{{ s.name }}</ion-col>
+        <ion-col size="4" class="center" [class.winner]="win(s.name, b, a)">{{ statOf(b, s.name) }}</ion-col>
+      </ion-row>
+      <ion-row class="cmp-row">
+        <ion-col size="4" class="center">{{ a.height }} m</ion-col>
+        <ion-col size="4" class="center">altura</ion-col>
+        <ion-col size="4" class="center">{{ b.height }} m</ion-col>
+      </ion-row>
+      <ion-row class="cmp-row">
+        <ion-col size="4" class="center">{{ a.weight }} kg</ion-col>
+        <ion-col size="4" class="center">peso</ion-col>
+        <ion-col size="4" class="center">{{ b.weight }} kg</ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>
